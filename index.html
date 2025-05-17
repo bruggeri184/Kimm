@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Pin Location Finder</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([39.5, -98.35], 4); // center of US
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let marker;
+
+        function fetchLocation(lat, lng) {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const address = data.address || {};
+                    const city = address.city || address.town || address.village || '';
+                    const county = address.county || '';
+                    const state = address.state || '';
+                    const info = `City: ${city}<br>County: ${county}<br>State: ${state}`;
+                    marker.bindPopup(info).openPopup();
+                })
+                .catch(err => {
+                    marker.bindPopup('Unable to fetch location details').openPopup();
+                });
+        }
+
+        map.on('click', (e) => {
+            if (marker) {
+                marker.setLatLng(e.latlng);
+            } else {
+                marker = L.marker(e.latlng).addTo(map);
+            }
+            fetchLocation(e.latlng.lat, e.latlng.lng);
+        });
+    </script>
+</body>
+</html>
